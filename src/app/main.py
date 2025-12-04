@@ -23,7 +23,7 @@ from .middleware import (
     TelemetryMiddleware,
     TenantContextMiddleware,
 )
-from .routers import admin, agents, chat, health, tenant
+from .routers import admin, agents, chat, health, tenant, costs, budgets, branding, notifications
 from .startup.discovery import run_discovery
 from .startup.init_tenants import init_tenants_from_config
 
@@ -144,6 +144,10 @@ app.include_router(chat.router)
 app.include_router(agents.router)
 app.include_router(tenant.router)
 app.include_router(admin.router)
+app.include_router(costs.router)
+app.include_router(budgets.router)
+app.include_router(branding.router)
+app.include_router(notifications.router)
 
 # Root endpoint
 @app.get("/", tags=["root"])

@@ -31,6 +31,7 @@ class BrandingConfig(BaseModel):
     font_family: Optional[str] = None
     logo_url: Optional[HttpUrl] = None
     favicon_url: Optional[HttpUrl] = None
+    custom_css: Optional[str] = None
 
 
 class TenantConfig(BaseModel):
@@ -59,6 +60,7 @@ class TenantConfig(BaseModel):
     quota_monthly_tokens: int = Field(default=1000000, description="Monthly token quota")
     
     # Budget management
+    budget_limit: Optional[float] = Field(default=None, description="Monthly budget limit in USD")
     budget_threshold: int = Field(default=90, ge=0, le=100, description="Budget alert %")
     budget_enforcement: BudgetEnforcement = Field(
         default=BudgetEnforcement.BLOCK,

@@ -11,11 +11,11 @@ from .tenant import BudgetEnforcement
 
 
 class CostBreakdown(BaseModel):
-    """Cost breakdown by service."""
-    service_name: str
+    """Cost breakdown by service with date."""
+    service: str
     cost: Decimal
+    date: datetime
     currency: str = "USD"
-    percentage: float = 0.0
 
 
 class TenantCost(BaseModel):
@@ -25,16 +25,10 @@ class TenantCost(BaseModel):
     period_end: datetime
     total_cost: Decimal
     currency: str = "USD"
-    breakdowns: List["CostBreakdown"] = Field(default_factory=list)  # Changed from breakdown
+    breakdowns: List[CostBreakdown] = Field(default_factory=list)
     tags: Dict[str, str] = Field(default_factory=dict)
 
 
-class CostBreakdown(BaseModel):
-    """Cost breakdown by service with date."""
-    service: str  # Changed from service_name
-    cost: Decimal
-    date: datetime
-    currency: str = "USD"
 class Budget(BaseModel):
     """Budget configuration."""
     tenant_id: str
