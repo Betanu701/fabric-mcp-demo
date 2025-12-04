@@ -1,0 +1,42 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environmentName": {
+      "value": "dev"
+    },
+    "location": {
+      "value": "eastus"
+    },
+    "containerRegistryName": {
+      "value": "mcpserverdev"
+    },
+    "imageTag": {
+      "value": "latest"
+    },
+    "enableEntraAuth": {
+      "value": false
+    },
+    "enableCommunicationServices": {
+      "value": false
+    },
+    "redisSku": {
+      "value": "Standard"
+    },
+    "redisCapacity": {
+      "value": 1
+    },
+    "containerAppCpu": {
+      "value": "0.5"
+    },
+    "containerAppMemory": {
+      "value": "1Gi"
+    },
+    "minReplicas": {
+      "value": 1
+    },
+    "maxReplicas": {
+      "value": 3
+    }
+  }
+}

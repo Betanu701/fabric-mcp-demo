@@ -1,0 +1,620 @@
+openapi: 3.0.3
+info:
+  title: Enterprise MCP Server API
+  version: 1.0.0
+  description: |
+    Multi-tenant Model Context Protocol server for Microsoft Azure with FoundryIQ integration,
+    cost management, rate limiting, and white-label branding capabilities.
+  contact:
+    name: API Support
+    email: support@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://mcp-server-prod.azurecontainerapps.io
+    description: Production
+  - url: https://mcp-server-dev.azurecontainerapps.io
+    description: Development
+  - url: http://localhost:8000
+    description: Local development
+
+security:
+  - tenantId: []
+
+tags:
+  - name: Chat
+    description: Conversation with agents via FoundryIQ
+  - name: Agents
+    description: Agent discovery and management
+  - name: Tenants
+    description: Multi-tenant configuration
+  - name: Costs
+    description: Cost tracking and budgets
+  - name: Branding
+    description: White-label customization
+  - name: Notifications
+    description: Alert and notification management
+  - name: Health
+    description: Health and readiness checks
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      description: Returns API health status
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  version:
+                    type: string
+                    example: 1.0.0
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /api/chat:
+    post:
+      tags: [Chat]
+      summary: Send message to agent
+      description: |
+        Send a message to an agent via FoundryIQ. Supports intelligent routing
+        if no agent_id is specified. Rate limited per tenant configuration.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message:
+                  type: string
+                  description: User message
+                  example: What is our Q4 revenue?
+                agent_id:
+                  type: string
+                  description: Specific agent ID (optional, auto-routed if not provided)
+                  example: finance-agent-001
+                conversation_id:
+                  type: string
+                  description: Continue existing conversation
+                  example: 550e8400-e29b-41d4-a716-446655440000
+                context:
+                  type: object
+                  description: Additional context for the agent
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Message processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+        '402':
+          description: Budget limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/agents:
+    get:
+      tags: [Agents]
+      summary: List available agents
+      description: Get all agents accessible to the current tenant
+      parameters:
+        - name: keyword
+          in: query
+          schema:
+            type: string
+          description: Filter by keyword
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive, all]
+            default: active
+          description: Filter by status
+      responses:
+        '200':
+          description: List of agents
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  agents:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Agent'
+
+  /api/agents/{agent_id}:
+    get:
+      tags: [Agents]
+      summary: Get agent details
+      parameters:
+        - name: agent_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Agent details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+
+  /api/costs:
+    get:
+      tags: [Costs]
+      summary: Get tenant costs
+      description: Retrieve cost breakdown for the current tenant
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Cost data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantCost'
+
+  /api/costs/forecast:
+    get:
+      tags: [Costs]
+      summary: Get cost forecast
+      parameters:
+        - name: days_ahead
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 90
+            default: 30
+      responses:
+        '200':
+          description: Forecasted costs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CostForecast'
+
+  /api/budgets:
+    get:
+      tags: [Costs]
+      summary: Get budget status
+      responses:
+        '200':
+          description: Budget status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetStatus'
+    put:
+      tags: [Costs]
+      summary: Update budget settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BudgetUpdate'
+      responses:
+        '200':
+          description: Budget updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetStatus'
+
+  /api/branding:
+    get:
+      tags: [Branding]
+      summary: Get tenant branding
+      description: Returns merged branding (global + tenant overrides)
+      responses:
+        '200':
+          description: Branding configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrandingConfig'
+    put:
+      tags: [Branding]
+      summary: Update tenant branding
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrandingConfig'
+      responses:
+        '200':
+          description: Branding updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrandingConfig'
+
+  /api/branding/logo:
+    post:
+      tags: [Branding]
+      summary: Upload tenant logo
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Logo uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logo_url:
+                    type: string
+                    example: https://cdn.example.com/branding/tenant-001-logo.png
+
+  /api/notifications:
+    post:
+      tags: [Notifications]
+      summary: Send notification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationRequest'
+      responses:
+        '200':
+          description: Notification sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notification_id:
+                    type: string
+
+  /api/notifications/history:
+    get:
+      tags: [Notifications]
+      summary: Get notification history
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Notification history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notifications:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Notification'
+                  total:
+                    type: integer
+
+  /api/tenants:
+    get:
+      tags: [Tenants]
+      summary: List tenants (admin only)
+      responses:
+        '200':
+          description: List of tenants
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tenants:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tenant'
+
+components:
+  securitySchemes:
+    tenantId:
+      type: apiKey
+      in: header
+      name: X-Tenant-ID
+      description: Tenant identifier for multi-tenant isolation
+
+  schemas:
+    Agent:
+      type: object
+      properties:
+        id:
+          type: string
+          example: sales-agent-001
+        name:
+          type: string
+          example: Sales Agent
+        description:
+          type: string
+          example: Answers questions about sales data
+        status:
+          type: string
+          enum: [active, inactive]
+        keywords:
+          type: array
+          items:
+            type: string
+          example: [sales, revenue, pipeline]
+        capabilities:
+          type: array
+          items:
+            type: string
+          example: [query_database, generate_reports]
+
+    ChatResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Q4 revenue was $10.2M, up 15% from Q3
+        agent_id:
+          type: string
+          example: finance-agent-001
+        conversation_id:
+          type: string
+          format: uuid
+        sources:
+          type: array
+          items:
+            type: string
+          example: [Fabric Data Agent: FinanceDB, SharePoint: Q4-Report.xlsx]
+        tokens_used:
+          type: integer
+          example: 245
+        latency_ms:
+          type: integer
+          example: 1250
+
+    TenantCost:
+      type: object
+      properties:
+        tenant_id:
+          type: string
+        total_cost:
+          type: number
+          format: float
+          example: 642.50
+        currency:
+          type: string
+          example: USD
+        period_start:
+          type: string
+          format: date
+        period_end:
+          type: string
+          format: date
+        breakdown:
+          type: array
+          items:
+            $ref: '#/components/schemas/CostBreakdown'
+
+    CostBreakdown:
+      type: object
+      properties:
+        service:
+          type: string
+          example: Azure Container Apps
+        cost:
+          type: number
+          format: float
+          example: 257.00
+        date:
+          type: string
+          format: date
+        currency:
+          type: string
+          example: USD
+
+    CostForecast:
+      type: object
+      properties:
+        forecasted_cost:
+          type: number
+          format: float
+        days_ahead:
+          type: integer
+        confidence:
+          type: string
+          enum: [low, medium, high]
+
+    BudgetStatus:
+      type: object
+      properties:
+        budget_limit:
+          type: number
+          format: float
+          example: 1000.00
+        current_spend:
+          type: number
+          format: float
+          example: 642.50
+        usage_percent:
+          type: number
+          format: float
+          example: 64.25
+        threshold:
+          type: integer
+          example: 90
+        enforcement:
+          type: string
+          enum: [warn, throttle, block]
+        budget_enabled:
+          type: boolean
+
+    BudgetUpdate:
+      type: object
+      properties:
+        limit:
+          type: number
+          format: float
+        threshold:
+          type: integer
+          minimum: 0
+          maximum: 100
+        enforcement:
+          type: string
+          enum: [warn, throttle, block]
+
+    BrandingConfig:
+      type: object
+      properties:
+        primary_color:
+          type: string
+          example: "#0078D4"
+        secondary_color:
+          type: string
+          example: "#50E6FF"
+        accent_color:
+          type: string
+          example: "#FFB900"
+        font_family:
+          type: string
+          example: Segoe UI, sans-serif
+        logo_url:
+          type: string
+          example: https://cdn.example.com/branding/logo.png
+        favicon_url:
+          type: string
+          example: https://cdn.example.com/branding/favicon.ico
+        app_name:
+          type: string
+          example: Enterprise MCP
+        custom_css:
+          type: string
+        inherit_global:
+          type: boolean
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          example: Budget Alert
+        message:
+          type: string
+          example: You have used 85% of your monthly budget
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+        channels:
+          type: array
+          items:
+            type: string
+            enum: [EMAIL, SMS, IN_APP, WEBHOOK]
+        created_at:
+          type: string
+          format: date-time
+        read:
+          type: boolean
+
+    NotificationRequest:
+      type: object
+      required: [title, message]
+      properties:
+        title:
+          type: string
+        message:
+          type: string
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+          default: medium
+        channels:
+          type: array
+          items:
+            type: string
+            enum: [EMAIL, SMS, IN_APP, WEBHOOK]
+          default: [IN_APP]
+        recipient:
+          type: string
+          description: Email or phone number
+
+    Tenant:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        enabled:
+          type: boolean
+        foundry_endpoint:
+          type: string
+        rate_limit_rpm:
+          type: integer
+        quota_monthly_requests:
+          type: integer
+        budget_limit:
+          type: number
+          format: float
+        created_at:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Rate limit exceeded
+        detail:
+          type: string
+          example: You have exceeded 100 requests per minute. Try again in 30 seconds.
+        code:
+          type: string
+          example: RATE_LIMIT_EXCEEDED
