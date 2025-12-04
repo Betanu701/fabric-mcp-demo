@@ -9,6 +9,16 @@ A production-ready Model Context Protocol (MCP) server for Microsoft Azure, feat
 
 **🚀 Ready to Deploy**: Complete with Bicep templates, CI/CD pipeline, and comprehensive documentation.
 
+## 🎯 Quick Start
+
+**New to this project?** Follow our [**Getting Started Guide**](GETTING_STARTED.md) for step-by-step setup instructions including:
+- Installing required tools (Azure CLI, Docker, etc.)
+- Setting up GitHub + Azure integration
+- Deploying your first environment
+- Configuring tenants and branding
+
+**Already familiar?** Jump to [Quick Start](#quick-start-1) below.
+
 ## Features
 
 - **Multi-Tenant Architecture**: Header-based tenant isolation with configurable quotas and policies
@@ -250,11 +260,14 @@ See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) for detailed gap analys
 
 ## Quick Links
 
+- 🚀 **[Getting Started Guide](GETTING_STARTED.md)** - Complete setup from scratch (NEW!)
 - 📖 **[Deployment Guide](docs/deployment.md)** - Deploy to Azure in minutes
 - 🚨 **[Disaster Recovery](docs/disaster-recovery.md)** - DR procedures and backups
 - 📊 **[API Specification](docs/api-spec.yaml)** - OpenAPI 3.0 documentation
 - 🎨 **[Branding Guide](docs/branding-guide.md)** - Customization and white-labeling
 - 📋 **[Implementation Status](IMPLEMENTATION_STATUS.md)** - Detailed progress tracking
+- ✅ **[Deployment Checklist](DEPLOYMENT_CHECKLIST.md)** - Pre-flight checks
+- 📈 **[Workbooks](infra/workbooks/README.md)** - Application Insights dashboards
 - 🎉 **[Final Summary](FINAL_SUMMARY.md)** - Complete accomplishments overview
 
 ## Support

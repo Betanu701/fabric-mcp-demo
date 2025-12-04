@@ -1,0 +1,86 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "## Cost Analysis Dashboard\n\nTrack Azure costs per tenant and service."
+      },
+      "name": "text - title"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "time-range",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "type": 4,
+            "isRequired": true,
+            "value": {
+              "durationMs": 2592000000
+            },
+            "typeSettings": {
+              "selectableValues": [
+                {
+                  "durationMs": 604800000
+                },
+                {
+                  "durationMs": 2592000000
+                },
+                {
+                  "durationMs": 7776000000
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "name": "parameters"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "customEvents\n| where timestamp > ago({TimeRange})\n| where name == 'cost_tracked'\n| extend tenant_id = tostring(customDimensions.tenant_id)\n| extend cost = todouble(customDimensions.cost)\n| summarize TotalCost = sum(cost) by tenant_id\n| order by TotalCost desc",
+        "size": 0,
+        "title": "Total Cost by Tenant",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "visualization": "piechart"
+      },
+      "name": "query - cost by tenant"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "customEvents\n| where timestamp > ago({TimeRange})\n| where name == 'cost_tracked'\n| extend service = tostring(customDimensions.service)\n| extend cost = todouble(customDimensions.cost)\n| summarize TotalCost = sum(cost) by service\n| order by TotalCost desc",
+        "size": 0,
+        "title": "Cost by Service",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "visualization": "barchart"
+      },
+      "name": "query - cost by service"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "customEvents\n| where timestamp > ago({TimeRange})\n| where name == 'budget_alert'\n| extend tenant_id = tostring(customDimensions.tenant_id)\n| extend usage_percent = todouble(customDimensions.usage_percent)\n| project timestamp, tenant_id, usage_percent, message = tostring(customDimensions.message)\n| order by timestamp desc",
+        "size": 0,
+        "title": "Budget Alerts",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "visualization": "table"
+      },
+      "name": "query - budget alerts"
+    }
+  ],
+  "fallbackResourceIds": [
+    "/subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/microsoft.insights/components/{app-insights-name}"
+  ]
+}

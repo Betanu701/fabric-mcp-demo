@@ -193,7 +193,16 @@ jobs:
         run: |
           echo "resource_group=mcp-server-${{ steps.env.outputs.environment }}" >> $GITHUB_OUTPUT
       
-      - name: Log in to Azure
+      - name: Log in to Azure (Federated Credentials)
+        if: ${{ secrets.AZURE_CLIENT_ID != '' }}
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      
+      - name: Log in to Azure (Service Principal)
+        if: ${{ secrets.AZURE_CLIENT_ID == '' }}
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
@@ -278,12 +287,21 @@ jobs:
         run: |
           echo "resource_group=mcp-server-${{ steps.env.outputs.environment }}" >> $GITHUB_OUTPUT
       
-      - name: Log in to Azure
+      - name: Log in to Azure (Federated Credentials)
+        if: ${{ secrets.AZURE_CLIENT_ID != '' }}
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      
+      - name: Log in to Azure (Service Principal)
+        if: ${{ secrets.AZURE_CLIENT_ID == '' }}
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       
-      - name: Get backend URL
+      - name: Get backend app name
         id: urls
         run: |
           BACKEND_URL=$(az deployment group show \

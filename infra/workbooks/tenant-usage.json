@@ -1,0 +1,98 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "## Tenant Usage Dashboard\n\nMonitor request counts, latency, and errors by tenant."
+      },
+      "name": "text - title"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "time-range",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "type": 4,
+            "isRequired": true,
+            "value": {
+              "durationMs": 3600000
+            },
+            "typeSettings": {
+              "selectableValues": [
+                {
+                  "durationMs": 300000
+                },
+                {
+                  "durationMs": 900000
+                },
+                {
+                  "durationMs": 1800000
+                },
+                {
+                  "durationMs": 3600000
+                },
+                {
+                  "durationMs": 14400000
+                },
+                {
+                  "durationMs": 43200000
+                },
+                {
+                  "durationMs": 86400000
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "name": "parameters"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "requests\n| where timestamp > ago({TimeRange})\n| extend tenant_id = tostring(customDimensions.tenant_id)\n| summarize RequestCount = count() by tenant_id\n| order by RequestCount desc",
+        "size": 0,
+        "title": "Requests by Tenant",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "visualization": "barchart"
+      },
+      "name": "query - requests by tenant"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "requests\n| where timestamp > ago({TimeRange})\n| extend tenant_id = tostring(customDimensions.tenant_id)\n| summarize AvgDuration = avg(duration), P95Duration = percentile(duration, 95) by tenant_id\n| order by AvgDuration desc",
+        "size": 0,
+        "title": "Average Response Time by Tenant",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "visualization": "table"
+      },
+      "name": "query - latency by tenant"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "requests\n| where timestamp > ago({TimeRange})\n| extend tenant_id = tostring(customDimensions.tenant_id)\n| summarize ErrorCount = countif(success == false), TotalRequests = count() by tenant_id\n| extend ErrorRate = round(100.0 * ErrorCount / TotalRequests, 2)\n| order by ErrorRate desc",
+        "size": 0,
+        "title": "Error Rate by Tenant",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "visualization": "table"
+      },
+      "name": "query - error rate"
+    }
+  ],
+  "fallbackResourceIds": [
+    "/subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/microsoft.insights/components/{app-insights-name}"
+  ]
+}
