@@ -1,0 +1,77 @@
+# Tenant Configuration
+# This file seeds initial tenant definitions into Azure Key Vault on first run.
+# After initialization, tenants can be managed via the admin portal.
+
+# allow_all: Accept any X-Tenant-ID header without validation (disable for production)
+allow_all: true
+
+# Initial tenant definitions
+tenants:
+  - id: default
+    name: Default Tenant
+    enabled: true
+    
+    # FoundryIQ configuration
+    foundry_endpoint: https://foundry.azure.com/default
+    
+    # Entra ID authentication (optional, null = disabled)
+    entra_client_id: null
+    entra_tenant_id: null
+    
+    # Data source allowlist (empty array = allow all discovered sources)
+    allowed_sources: []
+    
+    # Rate limiting
+    rate_limit_rpm: 100          # Requests per minute
+    rate_limit_rpd: 10000         # Requests per day
+    quota_monthly_requests: 100000
+    quota_monthly_tokens: 1000000
+    
+    # Budget management
+    budget_threshold: 90          # Percentage before enforcement
+    budget_enforcement: block     # Options: block, throttle, warn
+    
+    # Notifications
+    notification_channels:
+      - in-app                    # Options: in-app, email, sms
+    
+    # Branding (hierarchical with global inheritance)
+    branding:
+      inherit_global: true
+      # Override specific properties:
+      # primary_color: "#0078D4"
+      # logo_url: "https://...cdn.../tenant-logo.png"
+    
+    # Admin contact
+    admin_contact: admin@example.com
+    
+    # Metadata (auto-managed, do not edit)
+    created_at: "2025-12-04T00:00:00Z"
+    updated_at: "2025-12-04T00:00:00Z"
+
+# Example: Multi-tenant configuration
+#  - id: contoso
+#    name: Contoso Corporation
+#    enabled: true
+#    foundry_endpoint: https://foundry.azure.com/contoso
+#    entra_client_id: "12345678-1234-1234-1234-123456789abc"
+#    entra_tenant_id: "87654321-4321-4321-4321-cba987654321"
+#    allowed_sources:
+#      - fabric-data-agent-sales
+#      - fabric-data-agent-inventory
+#      - sharepoint-site-marketing
+#    rate_limit_rpm: 200
+#    rate_limit_rpd: 20000
+#    quota_monthly_requests: 500000
+#    quota_monthly_tokens: 5000000
+#    budget_threshold: 85
+#    budget_enforcement: throttle
+#    notification_channels:
+#      - in-app
+#      - email
+#    branding:
+#      inherit_global: false
+#      primary_color: "#005A9E"
+#      secondary_color: "#FFB900"
+#      logo_url: "https://cdn.example.com/contoso-logo.png"
+#    admin_contact: it-admin@contoso.com

@@ -1,0 +1,82 @@
+# Global Application Settings
+# These settings apply across all tenants unless overridden.
+
+# Application identity
+app_name: Enterprise MCP
+app_version: 1.0.0
+
+# Tenant management
+allow_all_tenants: true           # Accept any X-Tenant-ID (disable for production)
+
+# Default policies for new tenants
+default_budget_enforcement: block  # Options: block, throttle, warn
+default_budget_threshold: 90       # Percentage before enforcement
+default_rate_limit_rpm: 100        # Requests per minute
+default_rate_limit_rpd: 10000      # Requests per day
+default_quota_monthly_requests: 100000
+default_quota_monthly_tokens: 1000000
+default_notification_channels:
+  - in-app
+
+# Azure service endpoints (override via environment variables)
+redis_url: redis://localhost:6379
+redis_ssl: false
+redis_max_connections: 50
+
+key_vault_url: https://your-keyvault.vault.azure.net/
+blob_storage_url: https://yourblob.blob.core.windows.net/
+blob_container_branding: brand-assets
+
+# FoundryIQ configuration
+foundry_api_base: https://foundry.azure.com
+foundry_timeout: 30               # Seconds
+foundry_max_retries: 3
+
+# Security
+entra_enabled: false              # Enable Entra ID authentication
+entra_authority: https://login.microsoftonline.com/
+cors_origins:
+  - http://localhost:5173         # Local development
+  - http://localhost:3000
+
+# Monitoring
+application_insights_enabled: true
+log_level: INFO                   # DEBUG, INFO, WARNING, ERROR, CRITICAL
+telemetry_sampling_rate: 1.0      # 0.0 - 1.0
+
+# Cost Management
+cost_tracking_enabled: true
+cost_refresh_interval: 3600       # Seconds between cost data refreshes
+budget_alert_webhook_enabled: true
+
+# Notifications
+notification_default_sender: noreply@example.com
+notification_retry_attempts: 3
+
+# Branding defaults (applied unless tenant overrides)
+branding_default:
+  primary_color: "#0078D4"        # Microsoft blue
+  secondary_color: "#50E6FF"      # Light blue
+  accent_color: "#FFB900"         # Yellow
+  font_family: "Segoe UI, -apple-system, BlinkMacSystemFont, sans-serif"
+  logo_url: null
+  favicon_url: null
+
+# Feature flags
+feature_auto_discovery: true      # Auto-discover DataAgents on startup
+feature_multi_region_dr: false    # Enable multi-region disaster recovery
+feature_cost_optimization: true   # Enable cost optimization recommendations
+feature_advanced_analytics: false # Enable advanced analytics dashboard
+
+# API configuration
+api_timeout: 60                   # Request timeout in seconds
+api_max_payload_size: 10485760    # 10 MB
+api_rate_limit_global: 1000       # Global RPM (before per-tenant limits)
+
+# Setup wizard
+setup_wizard_enabled: true        # Show wizard on first run
+setup_wizard_skip_allowed: true   # Allow skipping wizard steps
+
+# Local development
+local_dev_mode: false             # Skip Azure service checks
+local_mock_services: false        # Use mock services instead of Azure
