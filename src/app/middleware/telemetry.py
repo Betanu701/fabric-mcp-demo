@@ -4,12 +4,17 @@ Uses OpenTelemetry for Application Insights integration.
 """
 import logging
 import time
-from typing import Callable
+from typing import Callable, Optional
 
 from fastapi import Request, Response
-from opentelemetry import trace
-from opentelemetry.trace import Status, StatusCode
 from starlette.middleware.base import BaseHTTPMiddleware
+
+try:
+    from opentelemetry import trace
+    from opentelemetry.trace import Status, StatusCode
+    TELEMETRY_AVAILABLE = True
+except ImportError:
+    TELEMETRY_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -20,10 +25,17 @@ class TelemetryMiddleware(BaseHTTPMiddleware):
     def __init__(self, app, tracer_provider=None):
         """Initialize telemetry middleware."""
         super().__init__(app)
-        self.tracer = trace.get_tracer(__name__, tracer_provider=tracer_provider)
+        if TELEMETRY_AVAILABLE:
+            self.tracer = trace.get_tracer(__name__, tracer_provider=tracer_provider)
+        else:
+            self.tracer = None
     
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Process request with tracing."""
+        if not TELEMETRY_AVAILABLE or self.tracer is None:
+            # Tracing disabled, just call next
+            return await call_next(request)
+        
         # Start span for this request
         with self.tracer.start_as_current_span(
             f"{request.method} {request.url.path}",

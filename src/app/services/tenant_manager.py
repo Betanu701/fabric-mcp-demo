@@ -31,6 +31,7 @@ class TenantManager:
         self._registry: Optional[TenantRegistry] = None
         self._cache_timestamp: Optional[datetime] = None
         self._cache_ttl = 300  # 5 minutes
+        self._local_tenants: Dict[str, TenantConfig] = {}
         
         # Initialize Key Vault client
         if settings.key_vault_url and not settings.local_mock_services:
@@ -42,10 +43,44 @@ class TenantManager:
         else:
             self.kv_client = None
             logger.warning("Key Vault client not initialized - using local mode")
+            self._load_local_tenants()
+    
+    def _load_local_tenants(self) -> None:
+        """Load tenant configurations from local YAML file for development."""
+        import yaml
+        from pathlib import Path
+        
+        config_path = Path(__file__).parent.parent.parent.parent / "config" / "tenants.yaml"
+        if not config_path.exists():
+            logger.warning(f"Local tenants config not found: {config_path}")
+            return
+        
+        try:
+            with open(config_path) as f:
+                data = yaml.safe_load(f)
+            
+            tenants_data = data.get("tenants", [])
+            for tenant_data in tenants_data:
+                tenant_id = tenant_data.get("id")
+                if tenant_id:
+                    tenant_config = TenantConfig(**tenant_data)
+                    self._local_tenants[tenant_id] = tenant_config
+            
+            logger.info(f"Loaded {len(self._local_tenants)} tenants from local config")
+        except Exception as e:
+            logger.error(f"Failed to load local tenants: {e}")
     
     async def initialize(self) -> None:
         """Initialize tenant manager, load registry from Key Vault."""
         logger.info("Initializing tenant manager")
+        
+        # In local mode, use local tenants
+        if self.kv_client is None:
+            tenant_ids = list(self._local_tenants.keys())
+            self._registry = TenantRegistry(tenants=tenant_ids)
+            logger.info(f"Initialized with {len(tenant_ids)} local tenants: {tenant_ids}")
+            return
+        
         try:
             await self.refresh_registry()
             logger.info(f"Tenant manager initialized with {len(self._cache)} tenants")
@@ -106,6 +141,13 @@ class TenantManager:
         # Check cache first
         if tenant_id in self._cache:
             return self._cache[tenant_id]
+        
+        # In local mode, check local tenants
+        if self.kv_client is None:
+            tenant_config = self._local_tenants.get(tenant_id)
+            if tenant_config:
+                self._cache[tenant_id] = tenant_config
+            return tenant_config
         
         # Try loading from Key Vault
         tenant_config = await self._load_tenant_config(tenant_id)
