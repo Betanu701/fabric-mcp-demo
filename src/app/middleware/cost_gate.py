@@ -3,11 +3,13 @@ Cost gate middleware for budget enforcement.
 Checks tenant budget status and enforces policies.
 """
 import logging
-from typing import Callable
+from typing import Callable, Optional
 
 from fastapi import Request, Response, status
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
+
+from ..services.budget_enforcer import BudgetEnforcer
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +20,6 @@ class CostGateMiddleware(BaseHTTPMiddleware):
     def __init__(self, app):
         """Initialize cost gate middleware."""
         super().__init__(app)
-        # TODO: Inject budget enforcer service
         self._enforcement_enabled = True
     
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
@@ -38,23 +39,48 @@ class CostGateMiddleware(BaseHTTPMiddleware):
         if not self._enforcement_enabled or not tenant_config:
             return await call_next(request)
         
-        # TODO: Implement actual budget check via budget_enforcer service
-        # For now, allow all requests
-        is_blocked = False
-        block_reason = None
+        # Get budget enforcer from app state
+        budget_enforcer: Optional[BudgetEnforcer] = None
+        if hasattr(request.app.state, "budget_enforcer"):
+            budget_enforcer = request.app.state.budget_enforcer
         
-        if is_blocked:
-            logger.warning(f"Request blocked for tenant {tenant_id}: {block_reason}")
-            return JSONResponse(
-                status_code=status.HTTP_402_PAYMENT_REQUIRED,
-                content={
-                    "error": "budget_exceeded",
-                    "message": "Tenant has exceeded budget limit",
-                    "reason": block_reason,
-                    "tenant_id": tenant_id,
-                    "enforcement": tenant_config.budget_enforcement.value
-                }
-            )
+        if budget_enforcer:
+            try:
+                # Check budget
+                allowed, reason, alert = await budget_enforcer.check_budget(tenant_config)
+                
+                if not allowed:
+                    logger.warning(f"Request blocked for tenant {tenant_id}: {reason}")
+                    
+                    # Send notification if alert exists
+                    if alert and hasattr(request.app.state, "notification_service"):
+                        notification_service = request.app.state.notification_service
+                        # Send budget alert (async, don't wait)
+                        # TODO: Get admin email from tenant config
+                        pass
+                    
+                    return JSONResponse(
+                        status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                        content={
+                            "error": "budget_exceeded",
+                            "message": "Tenant has exceeded budget limit",
+                            "reason": reason,
+                            "tenant_id": tenant_id,
+                            "enforcement": tenant_config.budget_enforcement.value,
+                            "current_cost": float(alert.current_cost) if alert else None,
+                            "budget_limit": float(alert.budget_limit) if alert else None
+                        }
+                    )
+                
+                # If there's a warning, add it to response headers
+                if reason:
+                    response = await call_next(request)
+                    response.headers["X-Budget-Warning"] = reason
+                    return response
+                    
+            except Exception as e:
+                logger.error(f"Budget check failed for {tenant_id}: {e}")
+                # Fail open - allow request if check fails
         
         # Process request
         return await call_next(request)

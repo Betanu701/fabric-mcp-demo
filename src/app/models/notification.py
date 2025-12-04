@@ -3,7 +3,7 @@ Pydantic models for notifications and alerts.
 """
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -14,6 +14,14 @@ class NotificationPriority(str, Enum):
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
+
+
+class NotificationChannel(str, Enum):
+    """Notification delivery channels."""
+    EMAIL = "email"
+    SMS = "sms"
+    IN_APP = "in-app"
+    WEBHOOK = "webhook"
 
 
 class NotificationType(str, Enum):
@@ -28,6 +36,14 @@ class NotificationType(str, Enum):
 
 class Notification(BaseModel):
     """Notification message."""
+    tenant_id: str
+    title: str
+    message: str
+    priority: NotificationPriority = NotificationPriority.MEDIUM
+    channels: List[NotificationChannel] = Field(default_factory=list)
+    recipient: Optional[str] = None  # Email or phone number
+    metadata: Optional[Dict[str, Any]] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
     id: str
     tenant_id: str
     type: NotificationType

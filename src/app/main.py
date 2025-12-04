@@ -43,8 +43,41 @@ async def lifespan(app: FastAPI):
     settings = get_settings()
     
     # Initialize tenant manager
+    from .services import (
+        TenantManager, RateLimiter, CostTracker, BudgetEnforcer,
+        FoundryIQClient, NotificationService, BrandingService
+    )
+    
     tenant_manager = get_tenant_manager(settings)
     await tenant_manager.initialize()
+    
+    # Initialize all services
+    logger.info("Initializing services")
+    
+    rate_limiter = RateLimiter(settings)
+    await rate_limiter.initialize()
+    app.state.rate_limiter = rate_limiter
+    
+    cost_tracker = CostTracker(settings)
+    await cost_tracker.initialize()
+    app.state.cost_tracker = cost_tracker
+    
+    budget_enforcer = BudgetEnforcer(settings, cost_tracker)
+    app.state.budget_enforcer = budget_enforcer
+    
+    foundry_client = FoundryIQClient(settings)
+    await foundry_client.initialize()
+    app.state.foundry_client = foundry_client
+    
+    notification_service = NotificationService(settings)
+    await notification_service.initialize()
+    app.state.notification_service = notification_service
+    
+    branding_service = BrandingService(settings)
+    await branding_service.initialize()
+    app.state.branding_service = branding_service
+    
+    logger.info("All services initialized")
     
     # Initialize tenants from config
     logger.info("Initializing tenants from configuration")
@@ -63,6 +96,11 @@ async def lifespan(app: FastAPI):
     
     # Shutdown
     logger.info("Shutting down Enterprise MCP Server")
+    
+    # Close all services
+    await rate_limiter.close()
+    await foundry_client.close()
+    logger.info("All services closed")
 
 
 # Create FastAPI application

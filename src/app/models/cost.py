@@ -25,18 +25,25 @@ class TenantCost(BaseModel):
     period_end: datetime
     total_cost: Decimal
     currency: str = "USD"
-    breakdown: List[CostBreakdown] = Field(default_factory=list)
+    breakdowns: List["CostBreakdown"] = Field(default_factory=list)  # Changed from breakdown
     tags: Dict[str, str] = Field(default_factory=dict)
 
 
+class CostBreakdown(BaseModel):
+    """Cost breakdown by service with date."""
+    service: str  # Changed from service_name
+    cost: Decimal
+    date: datetime
+    currency: str = "USD"
 class Budget(BaseModel):
     """Budget configuration."""
     tenant_id: str
-    amount: Decimal
-    currency: str = "USD"
-    period: str = Field(default="monthly", description="Budget period: monthly, quarterly, yearly")
+    limit: Optional[Decimal] = None  # Changed from amount
     threshold: int = Field(default=90, ge=0, le=100, description="Alert threshold percentage")
     enforcement: BudgetEnforcement = Field(default=BudgetEnforcement.BLOCK)
+    period_start: datetime
+    period_end: datetime
+    currency: str = "USD"
     enabled: bool = True
     
     # Current usage
@@ -51,13 +58,13 @@ class Budget(BaseModel):
 class BudgetAlert(BaseModel):
     """Budget alert event."""
     tenant_id: str
-    budget_id: str
-    alert_type: str = Field(description="threshold, exceeded, enforcement")
-    current_spend: Decimal
-    budget_amount: Decimal
-    percentage: float
+    budget_limit: Decimal
+    current_cost: Decimal
+    threshold: float
+    usage_percent: float
+    timestamp: datetime
+    alert_type: str = Field(default="threshold_exceeded")
     enforcement_action: Optional[str] = None
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
 
 
 class CostForecast(BaseModel):
