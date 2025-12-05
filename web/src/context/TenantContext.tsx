@@ -1,7 +1,7 @@
 /**
  * Tenant context provider for managing tenant state
  */
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface TenantContextType {
   tenantId: string;

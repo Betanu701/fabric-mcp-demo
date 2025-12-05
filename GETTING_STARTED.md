@@ -594,10 +594,11 @@ az containerapp logs show \
 
 After completing this guide:
 
-1. ✅ **[Configure Real FoundryIQ](docs/deployment.md#post-deployment-configuration)** - Connect to actual endpoints
-2. ✅ **[Review Security](docs/deployment.md#security-hardening)** - Enable Entra ID, configure network rules
-3. ✅ **[Set Up Monitoring](docs/deployment.md#monitoring-and-operations)** - Configure alerts and dashboards
-4. ✅ **[Review Costs](docs/deployment.md#cost-optimization)** - Optimize resource allocation
+1. ✅ **[Set Up Security & Authentication](docs/SECURITY_SETUP.md)** - Configure Entra ID and admin access
+2. ✅ **[Configure Real FoundryIQ](docs/deployment.md#post-deployment-configuration)** - Connect to actual endpoints
+3. ✅ **[Review Security Hardening](docs/deployment.md#security-hardening)** - Network rules and compliance
+4. ✅ **[Set Up Monitoring](docs/deployment.md#monitoring-and-operations)** - Configure alerts and dashboards
+5. ✅ **[Review Costs](docs/deployment.md#cost-optimization)** - Optimize resource allocation
 5. ✅ **[Disaster Recovery](docs/disaster-recovery.md)** - Test backup and restore procedures
 
 ## Additional Resources

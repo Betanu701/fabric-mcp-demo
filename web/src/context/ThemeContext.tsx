@@ -2,7 +2,6 @@
  * Theme context provider for dynamic theming
  */
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { apiClient } from '../api/client';
 
 interface BrandingConfig {
   primary_color?: string;
@@ -28,7 +27,7 @@ const defaultBranding: BrandingConfig = {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [branding, setBranding] = useState<BrandingConfig>(defaultBranding);
+  const [branding, _setBranding] = useState<BrandingConfig>(defaultBranding);
 
   const loadTheme = async () => {
     try {
