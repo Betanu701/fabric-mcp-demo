@@ -13,7 +13,8 @@ Get the Enterprise MCP Server running locally in under 5 minutes.
 
 ### 1. Clone and Navigate
 ```bash
-cd /home/derek/repo/fabric-mcp-demo
+git clone https://github.com/your-org/fabric-mcp-demo.git
+cd fabric-mcp-demo
 ```
 
 ### 2. Create Virtual Environment
